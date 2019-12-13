@@ -12,23 +12,37 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Norovirus
 
 ```{r datamimport}
-library(XML)
 library(data.table)
 library(here)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+library(leaflet)
+library(sp)
 
-# Read XML
-NoVXML <- xmlParse(here("data"),"production_areas.xml")
+# Read the data
+NoV <- fread(here("data", "production_areas.csv"))
 
-# Convert to List
-NoVList <- xmlToList(NoVXML)
+# Modify Spatial Data as numeric for Leaftet
+NoV[, long:=as.numeric(gsub(",", ".", longitude))]
+NoV[, lat:=as.numeric(gsub(",", ".", latitude))]
+NoV[, c("longitude", "latitude"):=NULL]
 
-# Each List element is a character vector.  Convert each of these into a data.table
-NoVList <- lapply(NoVList, function(x) as.data.table(as.list(x)))
+# Modify Dates
+NoV[, sampDate:=as.Date(paste0(sampY, "/", sampM, "/", sampD, sep="/"), "%Y/%m/%d")][
+    , arrivalDate:=as.Date(paste0(sampY, "/", sampM, "/", arrivalD, sep="/"), "%Y/%m/%d")][
+    , analysysDate:=as.Date(paste0(analysisY, "/", analysisM, "/", analysisD, sep="/"), "%Y/%m/%d")]
+str(NoV)
 
-# Rbind all the 1-row data.tables into a single data.table
-NoV <- rbindlist(NoVList, use.names = T, fill = T)
 
-NoV
+# Creates a map with points of lat and long data from NoV
+myMap <- leaflet(NoV) %>% addTiles() %>% addCircles(lng = ~long, lat = ~lat)
+myMap
+
+
+
+
+
 
 ```
 
