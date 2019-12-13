@@ -10,3 +10,25 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Norovirus
+
+```{r datamimport}
+library(XML)
+library(data.table)
+library(here)
+
+# Read XML
+NoVXML <- xmlParse(here("data"),"production_areas.xml")
+
+# Convert to List
+NoVList <- xmlToList(NoVXML)
+
+# Each List element is a character vector.  Convert each of these into a data.table
+NoVList <- lapply(NoVList, function(x) as.data.table(as.list(x)))
+
+# Rbind all the 1-row data.tables into a single data.table
+NoV <- rbindlist(NoVList, use.names = T, fill = T)
+
+NoV
+
+```
+
