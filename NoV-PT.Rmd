@@ -18,27 +18,48 @@ library(magrittr)
 library(knitr)
 library(kableExtra)
 library(leaflet)
-library(sp)
+library(ggplot2)
+library(ggthemes)
 
-# Read the data
+# Reads the data
 NoV <- fread(here("data", "production_areas.csv"))
 
-# Modify Spatial Data as numeric for Leaftet
+# Modifies spatial data as numeric
 NoV[, long:=as.numeric(gsub(",", ".", longitude))]
 NoV[, lat:=as.numeric(gsub(",", ".", latitude))]
 NoV[, c("longitude", "latitude"):=NULL]
 
-# Modify Dates
-NoV[, sampDate:=as.Date(paste0(sampY, "/", sampM, "/", sampD, sep="/"), "%Y/%m/%d")][
-    , arrivalDate:=as.Date(paste0(sampY, "/", sampM, "/", arrivalD, sep="/"), "%Y/%m/%d")][
-    , analysysDate:=as.Date(paste0(analysisY, "/", analysisM, "/", analysisD, sep="/"), "%Y/%m/%d")]
-str(NoV)
+# Aggregrates date columns for sample, arrival and analysis
+NoV[, sampDate:=as.Date(with(NoV, paste(sampY, sampM, sampD, sep="/")), "%Y/%m/%d")][
+    , arrivalDate:=as.Date(with(NoV, paste(sampY, sampM, arrivalD, sep="/")), "%Y/%m/%d")][
+    , analysisDate:=as.Date(with(NoV, paste(analysisY, analysisM, analysisD, sep="/")), "%Y/%m/%d")]
+NoV[, f.analysisDate:=as.factor(analysisDate)]
 
+# Creates a map with the dataset coordinates
+myMap <- leaflet(NoV) %>% 
+         addTiles() %>% 
+         addMarkers(lng = ~long, lat = ~lat, clusterOptions = markerClusterOptions())
 
-# Creates a map with points of lat and long data from NoV
-myMap <- leaflet(NoV) %>% addTiles() %>% addCircles(lng = ~long, lat = ~lat)
-myMap
+# Creates summary table
+NoV
+NoVSum <- NoV[, .(N = .N, Mean = mean(resVal, na.rm=TRUE), SD = sd(resVal, na.rm=TRUE)), by = .(f.analysisDate)]
 
+# Creates a tidy version of the previous table
+NoVSum %>%
+kable(align="lrrr", digits = c(0, 1, 1, 1)) %>%
+kable_styling(bootstrap_options = "striped", font_size = 24)
+
+# Creates a graph of the summary table
+NoV %>%
+ggplot(aes(f.analysisDate, resVal)) +
+  geom_point() +
+  scale_x_discrete(
+    labels=c("nov-dez 16", "jan-fev 17", "mar-apr 17", "may-jun 17", "jul-aug 17", "sep-oct 17", "nov-dez 17", "jan-fev 18", "mar-apr 18", "may-jun 18", "jul-aug 18", "sep-oct 18")
+  ) +
+  xlab("Date") +
+  ylab("Genome copies per gram") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+  
 
 
 
