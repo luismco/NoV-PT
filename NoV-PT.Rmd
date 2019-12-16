@@ -10,8 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Norovirus
+During the past 2 years, IPMA have been collecting oysters from the portguese production areas for Norovirus testing. The location of the points can be found in the map below
 
-```{r datamimport}
+```{r datamimport, echo=FALSE, error=FALSE, warning=FALSE, include=FALSE}
 library(data.table)
 library(here)
 library(magrittr)
@@ -30,40 +31,75 @@ NoV[, lat:=as.numeric(gsub(",", ".", latitude))]
 NoV[, c("longitude", "latitude"):=NULL]
 
 # Aggregrates date columns for sample, arrival and analysis
-NoV[, sampDate:=as.Date(with(NoV, paste(sampY, sampM, sampD, sep="/")), "%Y/%m/%d")][
-    , arrivalDate:=as.Date(with(NoV, paste(sampY, sampM, arrivalD, sep="/")), "%Y/%m/%d")][
-    , analysisDate:=as.Date(with(NoV, paste(analysisY, analysisM, analysisD, sep="/")), "%Y/%m/%d")]
+NoV[, sampDate:=as.Date(with(NoV, paste(sampY, sampM, sampD, sep = "/")), "%Y/%m/%d")][
+    , arrivalDate:=as.Date(with(NoV, paste(sampY, sampM, arrivalD, sep = "/")), "%Y/%m/%d")][
+    , analysisDate:=as.Date(with(NoV, paste(analysisY, analysisM, analysisD, sep = "/")), "%Y/%m/%d")]
 NoV[, f.analysisDate:=as.factor(analysisDate)]
+```
 
+# Introduction
+During the past 2 years, IPMA have been collecting oysters from the portguese production areas for Norovirus testing. The location of the points can be found in the map below.
+
+```{r myMap, echo=FALSE, error=FALSE, warning=FALSE}
 # Creates a map with the dataset coordinates
 myMap <- leaflet(NoV) %>% 
          addTiles() %>% 
          addMarkers(lng = ~long, lat = ~lat, clusterOptions = markerClusterOptions())
+myMap
+```
 
+# Results
+Norovirus were found during the winter months, in particular between november and february. The summary of the results are listed on the next table.
+```{r summary, echo=FALSE, error=FALSE, warning=FALSE}
 # Creates summary table
-NoV
-NoVSum <- NoV[, .(N = .N, Mean = mean(resVal, na.rm=TRUE), SD = sd(resVal, na.rm=TRUE)), by = .(f.analysisDate)]
+NoVSum <- NoV[, .(N = .N, Mean = mean(resVal, na.rm = TRUE), SD = sd(resVal, na.rm = TRUE)), by = .(f.analysisDate)]
 
 # Creates a tidy version of the previous table
 NoVSum %>%
-kable(align="lrrr", digits = c(0, 1, 1, 1)) %>%
-kable_styling(bootstrap_options = "striped", font_size = 24)
+kable(align = "lrrr", digits = c(0, 1, 1, 1)) %>%
+kable_styling(bootstrap_options = "striped", font_size = 12)
+```
 
-# Creates a graph of the summary table
+
+Below there's 3 diffent representation of the results.
+
+## Point graph
+```{r pgraph, echo=FALSE, error=FALSE, warning=FALSE}
+# Creates a point graph of the summary table
 NoV %>%
 ggplot(aes(f.analysisDate, resVal)) +
   geom_point() +
   scale_x_discrete(
-    labels=c("nov-dez 16", "jan-fev 17", "mar-apr 17", "may-jun 17", "jul-aug 17", "sep-oct 17", "nov-dez 17", "jan-fev 18", "mar-apr 18", "may-jun 18", "jul-aug 18", "sep-oct 18")
-  ) +
-  xlab("Date") +
+    labels = c("nov-dez 16", "jan-fev 17", "mar-apr 17", "may-jun 17", "jul-aug 17", "sep-oct 17", "nov-dez 17", "jan-fev 18", "mar-apr 18", "may-jun 18", "jul-aug 18", "sep-oct 18")) +
+  xlab("Months") +
   ylab("Genome copies per gram") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
-  
-
-
-
-
-
 ```
+
+## Box-plot graph
+```{r bpgraph, echo=FALSE, error=FALSE, warning=FALSE}
+# Creates a boxplot graph of the summary table
+NoV %>%
+ggplot(aes(f.analysisDate, resVal)) +
+  geom_boxplot() +
+  scale_x_discrete(
+    labels = c("nov-dez 16", "jan-fev 17", "mar-apr 17", "may-jun 17", "jul-aug 17", "sep-oct 17", "nov-dez 17", "jan-fev 18", "mar-apr 18", "may-jun 18", "jul-aug 18", "sep-oct 18")) +
+  xlab("Months") +
+  ylab("Genome copies per gram") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+## Column graph
+```{r cgraph, echo=FALSE, error=FALSE, warning=FALSE}
+# Creates a column graph of the summary table
+NoV %>%
+ggplot(aes(f.analysisDate, resVal)) +
+  geom_col() +
+  scale_x_discrete(
+    labels = c("nov-dez 16", "jan-fev 17", "mar-apr 17", "may-jun 17", "jul-aug 17", "sep-oct 17", "nov-dez 17", "jan-fev 18", "mar-apr 18", "may-jun 18", "jul-aug 18", "sep-oct 18")) +
+  xlab("Months") +
+  ylab("Genome copies per gram") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
 
