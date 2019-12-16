@@ -56,7 +56,8 @@ NoVSum <- NoV[, .(N = .N, Mean = mean(resVal, na.rm = TRUE), SD = sd(resVal, na.
 
 # Creates a tidy version of the previous table
 NoVSum %>%
-kable(align = "lrrr", digits = c(0, 1, 1, 1)) %>%
+kable(align = "lrrr", digits = c(0, 1, 1, 1),
+      col.names = c("Analisys Date", "N", "Mean", "SD")) %>%
 kable_styling(bootstrap_options = "striped", font_size = 12)
 ```
 
